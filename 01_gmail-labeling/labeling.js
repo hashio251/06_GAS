@@ -21,7 +21,7 @@ const inAdressLabel2 = GmailApp.getUserLabelByName('親ラベル名/子ラベル
 const inAdressLabel3 = GmailApp.getUserLabelByName('親ラベル名/子ラベル名');
 const inAdressLabel4 = GmailApp.getUserLabelByName('親ラベル名/子ラベル名');
 const inAdressORLabel1 = GmailApp.getUserLabelByName('親ラベル名/子ラベル名')
-const inTextLabel1 = GmailApp.getUserLabelByName('[親ラベル名/子ラベル名');
+const inTextLabel1 = GmailApp.getUserLabelByName('親ラベル名/子ラベル名');
 const inTextORLabel1 = GmailApp.getUserLabelByName('_deleteTarget');
 
 
