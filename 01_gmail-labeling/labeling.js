@@ -50,10 +50,9 @@ function labelSorting() {
 
   // Debug
   // 件数チェック
-  // console.log('手嶋さんからのメール：' + inAdressTeshima.length + '件');
   // console.log('git/Run Failed：' + inRunFailed.length + '件');
   // ラベルが存在するかチェック
-  // console.log('IDラベル：' + (moneyIdLabel?.getName() ?? '存在しない'));
+  // console.log('メールアドレスの一部1のラベル：' + (inAdressLabel1?.getName() ?? '存在しない'));
 }
 
 
