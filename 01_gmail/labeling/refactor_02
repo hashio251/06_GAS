@@ -1,0 +1,96 @@
+/**
+ * 条件設定の一覧（ここに新しい検索条件とラベルの組み合わせを追加・編集できます）
+ */
+const FILTER_RULES = [
+  {
+    query: 'from:メールアドレスの一部1 -label:親ラベル名/子ラベル名',
+    labelName: '親ラベル名/子ラベル名'
+  },
+  {
+    query: 'from:メールアドレスの一部2 -label:親ラベル名/子ラベル名',
+    labelName: '親ラベル名/子ラベル名'
+  },
+  {
+    query: 'from:メールアドレスの一部3 -label:親ラベル名/子ラベル名',
+    labelName: '親ラベル名/子ラベル名'
+  },
+  {
+    query: 'from:メールアドレスの一部4 -label:親ラベル名/子ラベル名',
+    labelName: '親ラベル名/子ラベル名'
+  },
+  {
+    query: 'from:{メールアドレスの一部 メールアドレスの一部 メールアドレスの一部} -label:親ラベル名/子ラベル名',
+    labelName: '親ラベル名/子ラベル名'
+  },
+  {
+    query: '"検索したい文字列" -label:親ラベル名/子ラベル名',
+    labelName: '親ラベル名/子ラベル名'
+  },
+  {
+    query: '{"検索したい文字列" "検索したい文字列"} -label:_deleteTarget',
+    labelName: '_deleteTarget'
+  }
+];
+
+/**
+ * ラベル名を含むメールそれぞれに各ラベルを付与
+ */
+function labelSorting() {
+  FILTER_RULES.forEach((rule, index) => {
+    const label = GmailApp.getUserLabelByName(rule.labelName);
+
+    if (!label) {
+      console.error(`[index: ${index}] ラベルが見つかりません：${rule.labelName}`);
+      return;
+    }
+
+    const threads = GmailApp.search(rule.query);
+    if (threads.length === 0) return;
+
+    // 100件ずつに分割して処理
+    for (let j = 0; j < threads.length; j += 100) {
+      const batch = threads.slice(j, j + 100);
+      label.addToThreads(batch);
+    }
+    
+    console.log(`[処理完了] "${rule.labelName}" に ${threads.length} 件のスレッドを紐づけました。`);
+  });
+}
+
+/**
+ * 削除対象のメールを確認 (プレビュー)
+ */
+function previewDelete() {
+  const threads = GmailApp.search('label:_deleteTarget -in:trash', 0, 100);
+
+  console.log(`削除対象（最大100件表示）：${threads.length}件`);
+
+  threads.forEach((thread) => {
+    console.log(thread.getFirstMessageSubject());
+  });
+}
+
+/**
+ * _deleteTarget のスレッドをゴミ箱に移動
+ */
+function messageDelete() {
+  const label = GmailApp.getUserLabelByName('_deleteTarget');
+
+  if (!label) {
+    console.error('ラベル "_deleteTarget" が見つかりません');
+    return;
+  }
+
+  let total = 0;
+
+  while (true) {
+    const threads = GmailApp.search('label:_deleteTarget -in:trash', 0, 100);
+
+    if (threads.length === 0) break;
+
+    GmailApp.moveThreadsToTrash(threads);
+    total += threads.length;
+  }
+
+  console.log(`${total}件のスレッドをゴミ箱に移動しました`);
+}

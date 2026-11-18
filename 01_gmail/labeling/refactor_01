@@ -1,0 +1,85 @@
+const BATCH_SIZE = 100;
+const DELETE_LABEL = '_deleteTarget';
+const DELETE_QUERY = `label:${DELETE_LABEL} -in:trash`;
+
+// ルールを追加する場合は、この配列に1行追加する
+const LABEL_RULES = [
+  { query: 'from:メールアドレスの一部1', labelName: '親ラベル名/子ラベル名' },
+  { query: 'from:メールアドレスの一部2', labelName: '親ラベル名/子ラベル名' },
+  { query: 'from:メールアドレスの一部3', labelName: '親ラベル名/子ラベル名' },
+  { query: 'from:メールアドレスの一部4', labelName: '親ラベル名/子ラベル名' },
+
+  // 複数の送信元のうち、いずれかに一致
+  { query: '{from:送信元A from:送信元B from:送信元C}', labelName: '親ラベル名/子ラベル名' },
+
+  // 指定した語句に一致
+  { query: '"検索したい文字列"', labelName: '親ラベル名/子ラベル名' },
+
+  // いずれかの語句に一致するスレッドを整理対象にする
+  { query: '{"通知A" "通知B" "通知C"}', labelName: DELETE_LABEL },
+];
+
+function labelSorting() {
+  for (const { query, labelName } of LABEL_RULES) {
+    const label = GmailApp.getUserLabelByName(labelName);
+
+    if (!label) {
+      console.warn(`ラベルが見つかりません：${labelName}`);
+      continue;
+    }
+
+    // Gmailの検索式では、階層の「/」や空白を「-」に置き換える
+    const searchLabel = labelName.replace(/[\s/]+/g, '-');
+    const batches = getThreadBatches(`(${query}) -label:${searchLabel}`);
+    let total = 0;
+
+    for (const threads of batches) {
+      label.addToThreads(threads);
+      total += threads.length;
+    }
+
+    console.log(`${labelName}：${total}件のスレッドにラベルを付けました`);
+  }
+}
+
+function previewDelete() {
+  const threads = GmailApp.search(DELETE_QUERY, 0, BATCH_SIZE);
+
+  console.log(`ゴミ箱への移動対象（最大${BATCH_SIZE}件表示）：${threads.length}件`);
+
+  for (const thread of threads) {
+    console.log(thread.getFirstMessageSubject());
+  }
+}
+
+function messageDelete() {
+  if (!GmailApp.getUserLabelByName(DELETE_LABEL)) {
+    console.warn(`ラベルが見つかりません：${DELETE_LABEL}`);
+    return;
+  }
+
+  const batches = getThreadBatches(DELETE_QUERY);
+  let total = 0;
+
+  for (const threads of batches) {
+    GmailApp.moveThreadsToTrash(threads);
+    total += threads.length;
+  }
+
+  console.log(`${total}件のスレッドをゴミ箱に移動しました`);
+}
+
+// ラベル付与やゴミ箱への移動を始める前に、対象を100件ずつ取得する
+function getThreadBatches(query) {
+  const batches = [];
+
+  for (let start = 0; ; start += BATCH_SIZE) {
+    const threads = GmailApp.search(query, start, BATCH_SIZE);
+
+    if (threads.length === 0) {
+      return batches;
+    }
+
+    batches.push(threads);
+  }
+}
